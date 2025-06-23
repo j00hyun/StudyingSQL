@@ -1,0 +1,65 @@
+CREATE TABLE STARBUCKS_ORDER (
+
+	ORDER_NO		NUMBER(5) PRIMARY KEY,
+	ORDER_DT		VARCHAR2(8) NOT NULL,
+	BRANCH			VARCHAR2(10),
+	ORDER_ITEM		VARCHAR2(100),
+	REG_NAME		VARCHAR2(20),
+	REG_DTS			DATE
+
+);
+
+SELECT * FROM STARBUCKS_ORDER;
+
+-- 데이터 생성
+BEGIN
+  FOR i IN 1..200 LOOP
+    INSERT INTO STARBUCKS_ORDER (
+      ORDER_NO, ORDER_DT, BRANCH, ORDER_ITEM, REG_NAME, REG_DTS
+    ) VALUES (
+      i,
+      TO_DATE('20190806', 'YYYYMMDD') + MOD(i, 2), -- 날짜 반복
+      CASE MOD(i, 3)
+        WHEN 0 THEN '강남점'
+        WHEN 1 THEN '서초점'
+        ELSE '잠실점'
+      END,
+      CASE MOD(i, 5)
+        WHEN 0 THEN '아메리카노'
+        WHEN 1 THEN '카페라떼'
+        WHEN 2 THEN '바닐라 프라푸치노'
+        WHEN 3 THEN '콜드브루'
+        ELSE '자바칩 프라푸치노'
+      END,
+      CASE MOD(i, 4)
+        WHEN 0 THEN '릴리'
+        WHEN 1 THEN '봄'
+        WHEN 2 THEN '테스'
+        ELSE '무드'
+      END,
+      TO_DATE('19/08/06 21:20:' || LPAD(TO_CHAR(17 + MOD(i, 10)), 2, '0'), 'YY/MM/DD HH24:MI:SS')
+    );
+  END LOOP;
+  COMMIT;
+END;
+
+-- Full Scan
+SELECT * FROM STARBUCKS_ORDER WHERE REG_NAME = '봄';
+
+-- 실행계획 확인
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST'));
+
+-- 인덱스 생성
+CREATE INDEX IDX_SB1 ON STARBUCKS_ORDER (REG_NAME);
+
+-- Index Range Scan
+SELECT * FROM STARBUCKS_ORDER WHERE REG_NAME = '봄';
+
+-- 실행계획 확인
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST'));
+
+-- 오라클 힌트 사용
+SELECT /* +INDEX(STARBUCKS_ORDER IDX_SB1) */ * FROM STARBUCKS_ORDER WHERE REG_NAME = '봄'; -- 무조건 IDX_SB1 인덱스를 타게 강제함
+
+-- 인덱스 삭제
+DROP INDEX IDX_SB1;
