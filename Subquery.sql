@@ -70,4 +70,65 @@ SELECT B.EMPLOYEE_ID,
   
 -- 2. Scala 서브쿼리
 
+-- 실행 계획: EMPLOYEES 테이블을 풀 스캔 후 DEPARTMENT_ID를 가지고 DEPARTMENTS 테이블에서 PK 인덱스 스캔 진행 
+SELECT FIRST_NAME,
+       LAST_NAME,
+       SALARY,
+       (SELECT B.DEPARTMENT_NAME -- 1개의 값만 리턴 가능 (SELECT B.DEPARTMENT_NAME, B.LOCATION_ID 불가)
+          FROM HR.DEPARTMENTS B 
+         WHERE B.DEPARTMENT_ID = A.DEPARTMENT_ID
+           AND ROWNUM = 1) AS DEPT_NM -- ROWNUM = 1 : B에서 DEPARTMENT_ID가 PK가 아닌 경우 오류 발생 가능 -> 1개의 로우만 가져오도록 함
+  FROM HR.EMPLOYEES A
+ WHERE SALARY > 5000;
+ 
+-- 캐싱 기능 존재
+--      스칼라 서브쿼리의 입력값 (DEPARTMENT_ID), 출력값 (DEPARTMENT_NAME) 캐쉬에 저장 (ex. 60: IT, 100: Finance)
+--      다음 쿼리가 입력값에 대한 출력값을 요청한다면 쿼리를 수행하지 않고 출력값 리턴
+--      지금처럼 DEPARTMENT의 DISTINCT 수가 적다면 캐싱 기능이 큰 효과를 발휘
+
 -- 3. Inline 뷰
+
+--      따로 OBJECT를 생성하지 않는 일회성 VIEW
+--      장점: 필요한 데이터만 INLINE VIEW로 생성 후 JOIN하여 속도 개선 가능 
+
+-- 부서별 평균 급여
+SELECT A.DEPARTMENT_NAME,
+       B.AVG_SAL
+  FROM HR.DEPARTMENTS A,
+       (SELECT /*+NO_MERGE*/ -- 힌트 사용해 강제로 인라인 뷰 사용 (GROUP BY 후 JOIN)
+               DEPARTMENT_ID,
+               ROUND(AVG(SALARY), 2) AVG_SAL
+          FROM HR.EMPLOYEES
+        GROUP BY DEPARTMENT_ID) B
+ WHERE A.DEPARTMENT_ID = B.DEPARTMENT_ID;
+
+SELECT A.DEPARTMENT_NAME,
+       B.AVG_SAL
+  FROM HR.DEPARTMENTS A,
+       (SELECT /*+MERGE*/ -- 힌트 사용해 강제로 인라인 뷰 사용하지 않도록 함 (JOIN 후 GROUP BY)
+               DEPARTMENT_ID,
+               ROUND(AVG(SALARY), 2) AVG_SAL
+          FROM HR.EMPLOYEES
+        GROUP BY DEPARTMENT_ID) B
+ WHERE A.DEPARTMENT_ID = B.DEPARTMENT_ID;
+ 
+ -- 월별 입사한 사람 수
+SELECT SUM(M1), SUM(M2), SUM(M3), SUM(M4), SUM(M5), SUM(M6), 
+       SUM(M7), SUM(M8), SUM(M9), SUM(M10), SUM(M11), SUM(M12)
+  FROM (
+        SELECT DECODE(TO_CHAR(HIRE_DATE, 'MM'), '01', COUNT(*), 0) "M1",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '02', COUNT(*), 0) "M2",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '03', COUNT(*), 0) "M3",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '04', COUNT(*), 0) "M4",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '05', COUNT(*), 0) "M5",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '06', COUNT(*), 0) "M6",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '07', COUNT(*), 0) "M7",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '08', COUNT(*), 0) "M8",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '09', COUNT(*), 0) "M9",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '10', COUNT(*), 0) "M10",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '11', COUNT(*), 0) "M11",
+               DECODE(TO_CHAR(HIRE_DATE, 'MM'), '12', COUNT(*), 0) "M12"
+          FROM HR.EMPLOYEES
+        GROUP BY TO_CHAR(HIRE_DATE, 'MM')
+  );
+        
