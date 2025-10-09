@@ -119,6 +119,17 @@ SELECT MOD(22.75, 5); -- 2.75
 SELECT POW(2, 8); -- 256
 
 
+-- AVG(): 평균 계산 (GROUP BY와 함께 사용 가능)
+SELECT AVG(num) -- 20
+FROM (
+	SELECT 10 AS num
+	UNION ALL
+	SELECT 20
+	UNION ALL
+	SELECT 30
+) AS t;
+
+
 ## 숫자 자릿수 관리
 
 
