@@ -220,9 +220,13 @@ SELECT DAYNAME('2019-09-18'); -- Wednesday
 
 -- EXTRACT(): 원하는 날짜 요소 반환
 SELECT EXTRACT(YEAR FROM '2019-09-18 22:19:05'); -- 2019
+-- 더 쉬운 방법
+SELECT YEAR('2019-09-18 22:19:05'); -- 2019
+
 
 -- DATE_FORMAT(): 원하는 날짜 요소 반환
 SELECT DATE_FORMAT('2018-12-18', '%Y-%m'); -- 2018-12
+
 
 -- DATEDIFF(): 두 날짜 사이의 전체 일 수 계산
 SELECT DATEDIFF('2019-09-03', '2019-06-21'); -- 74
