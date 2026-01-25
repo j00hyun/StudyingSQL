@@ -15,7 +15,7 @@ DATE_FORMAT('2018-12-18', '%Y-%m'); -- 2018-12
 
 -- DATE_FORMAT 대신 범위 비교가 인덱스를 타서 더 좋음
 WHERE DATE_FORMAT(c.call_date, '%Y-%m') = '2020-04' -- 안좋은 예
-WHERE c.call_date >= '2020-04-01' AND c.call_date <  '2020-05-01' -- 더 좋음
+WHERE c.call_date >= '2020-04-01' AND c.call_date < '2020-05-01' -- 더 좋음
 
 
 -- 두 시간 사이의 간격 계산
